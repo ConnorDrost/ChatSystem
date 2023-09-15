@@ -15,13 +15,19 @@ class Server_Socket
 {
 public:
 
-	Server_Socket() {};
+	Server_Socket();
 	~Server_Socket() {};
 
 	bool InitializeWindowsSocket();
-	int CreateSocket();
+	void CreateSocket();
+	
+	int BindSocket();
+	int ListenSocket();
+	int AcceptSocket();
 
-private:
+	void ShutdownSocket();
+
+	void Receive();
 
 	SOCKET serverListenSocket = INVALID_SOCKET;
 	SOCKET acceptedSocket = INVALID_SOCKET;
@@ -29,6 +35,6 @@ private:
 	struct addrinfo* addrResult = NULL, sockInfo;
 
 
-	int iResult;
+	int iResult = 0;
 	char recvBuff[DEFAULT_BUFLEN];
 };

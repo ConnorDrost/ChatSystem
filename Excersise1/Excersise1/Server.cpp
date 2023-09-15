@@ -2,7 +2,7 @@
 
 Server_Socket::Server_Socket()
 {
-
+	CreateSocket();
 }
 
 bool Server_Socket::InitializeWindowsSocket()
@@ -16,11 +16,12 @@ bool Server_Socket::InitializeWindowsSocket()
 	}
 	return true;
 }
-int Server_Socket::CreateSocket()
+
+void Server_Socket::CreateSocket()
 {
 	if (InitializeWindowsSocket() == false)
 	{
-		return 1;
+		return;
 	}
 
 	memset(&sockInfo, 0, sizeof(sockInfo));
@@ -37,7 +38,7 @@ int Server_Socket::CreateSocket()
 	{
 		printf("getaddrinfo failed: %d\n", iResult);
 		WSACleanup();
-		return 1;
+		return;
 	}
 
 	serverListenSocket = socket(addrResult->ai_family, addrResult->ai_socktype, addrResult->ai_protocol);
@@ -47,10 +48,17 @@ int Server_Socket::CreateSocket()
 		printf("Error at socket(): %ld\n", WSAGetLastError());
 		freeaddrinfo(addrResult);
 		WSACleanup();
-		return 1;
+		return;
 	}
 
+	return;
+
+}
+
+int Server_Socket::BindSocket()
+{
 	//BIND
+	
 	//Setup TCP listening socket
 	iResult = bind(serverListenSocket, addrResult->ai_addr, (int)addrResult->ai_addrlen);
 
@@ -65,8 +73,12 @@ int Server_Socket::CreateSocket()
 
 	freeaddrinfo(addrResult);
 
-	//LISTEN
+	return 0;
+}
 
+int Server_Socket::ListenSocket()
+{
+	//LISTEN
 
 	if (listen(serverListenSocket, SOMAXCONN) == SOCKET_ERROR)
 	{
@@ -76,6 +88,13 @@ int Server_Socket::CreateSocket()
 		return 1;
 	}
 
+	return 0;
+}
+
+	
+
+int Server_Socket::AcceptSocket()
+{
 	//ACCEPT
 
 	acceptedSocket = accept(serverListenSocket, NULL, NULL);
@@ -88,10 +107,64 @@ int Server_Socket::CreateSocket()
 		return 1;
 	}
 
-
-
-
-
 	return 0;
 }
-;
+
+void Server_Socket::ShutdownSocket()
+{
+	iResult = shutdown(acceptedSocket, SD_SEND);
+
+	if (iResult == SOCKET_ERROR)
+	{
+		printf("shutdown failed with error: %d\n", WSAGetLastError());
+		closesocket(acceptedSocket);
+		WSACleanup();
+		return;
+	}
+
+	return;
+}
+
+void Server_Socket::Receive()
+{
+	do
+	{
+		// Wait for clients and accept client connections.
+		// Returning value is acceptedSocket used for further
+		// Client<->Server communication. This version of
+		// server will handle only one client.
+
+		do
+		{
+			// Receive data until the client shuts down the connection
+			iResult = recv(acceptedSocket, recvBuff, DEFAULT_BUFLEN, 0);
+			if (iResult > 0)
+			{
+				printf("Message received from client: %s.\n", recvBuff);
+			}
+			else if (iResult == 0)
+			{
+				// connection was closed gracefully
+				printf("Connection with client closed.\n");
+				closesocket(acceptedSocket);
+			}
+			else
+			{
+				// there was an error during recv
+				printf("recv failed with error: %d\n", WSAGetLastError());
+				closesocket(acceptedSocket);
+			}
+
+		} while (iResult > 0);
+
+
+		// here is where server shutdown logic could be placed
+		
+
+	} while (1);
+
+	ShutdownSocket();
+
+	return;
+}
+

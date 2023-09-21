@@ -1,5 +1,31 @@
 #include "Server.h"
 
+int main(void)
+{
+	Server_Socket Server;
+
+
+	if (!Server.BindSocket())
+	{
+		return 0;
+	}
+
+	if (!Server.ListenSocket())
+	{
+		return 0;
+	}
+
+	if (!Server.AcceptSocket())
+	{
+		return 0;
+	}
+
+
+	Server.Receive();
+
+	return 0;
+};
+
 Server_Socket::Server_Socket()
 {
 	CreateSocket();
@@ -51,11 +77,13 @@ void Server_Socket::CreateSocket()
 		return;
 	}
 
+	printf("Socket Created\n");
+
 	return;
 
 }
 
-int Server_Socket::BindSocket()
+bool Server_Socket::BindSocket()
 {
 	//BIND
 	
@@ -68,15 +96,17 @@ int Server_Socket::BindSocket()
 		freeaddrinfo(addrResult);
 		closesocket(serverListenSocket);
 		WSACleanup();
-		return 1;
+		return false;
 	}
 
 	freeaddrinfo(addrResult);
 
-	return 0;
+	printf("Socket Bound\n");
+
+	return true;
 }
 
-int Server_Socket::ListenSocket()
+bool Server_Socket::ListenSocket()
 {
 	//LISTEN
 
@@ -85,15 +115,17 @@ int Server_Socket::ListenSocket()
 		printf("Listen failed with error: %ld\n", WSAGetLastError());
 		closesocket(serverListenSocket);
 		WSACleanup();
-		return 1;
+		return false;
 	}
 
-	return 0;
+	printf("Listening\n");
+
+	return true;
 }
 
 	
 
-int Server_Socket::AcceptSocket()
+bool Server_Socket::AcceptSocket()
 {
 	//ACCEPT
 
@@ -104,10 +136,12 @@ int Server_Socket::AcceptSocket()
 		printf("accept failed: %d\n", WSAGetLastError());
 		closesocket(serverListenSocket);
 		WSACleanup();
-		return 1;
+		return false;
 	}
 
-	return 0;
+	printf("Socket Accepted\n");
+
+	return true;
 }
 
 void Server_Socket::ShutdownSocket()
@@ -122,6 +156,8 @@ void Server_Socket::ShutdownSocket()
 		return;
 	}
 
+	printf("Socket Shutdown\n");
+
 	return;
 }
 
@@ -134,10 +170,14 @@ void Server_Socket::Receive()
 		// Client<->Server communication. This version of
 		// server will handle only one client.
 
+		AcceptSocket();
+
 		do
 		{
 			// Receive data until the client shuts down the connection
 			iResult = recv(acceptedSocket, recvBuff, DEFAULT_BUFLEN, 0);
+
+
 			if (iResult > 0)
 			{
 				printf("Message received from client: %s.\n", recvBuff);
@@ -159,11 +199,10 @@ void Server_Socket::Receive()
 
 
 		// here is where server shutdown logic could be placed
+		ShutdownSocket();
 		
 
 	} while (1);
-
-	ShutdownSocket();
 
 	return;
 }

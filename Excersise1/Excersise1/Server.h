@@ -20,9 +20,9 @@ public:
 	bool InitializeWindowsSocket();
 	void CreateSocket();
 	
-	int BindSocket();
-	int ListenSocket();
-	int AcceptSocket();
+	bool BindSocket();
+	bool ListenSocket();
+	bool AcceptSocket();
 
 	void ShutdownSocket();
 

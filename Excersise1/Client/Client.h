@@ -1,4 +1,6 @@
 #pragma once
+#define WIN32_LEAN_AND_MEAN
+
 #include <windows.h>
 #include <ws2tcpip.h>
 #include <stdlib.h>
@@ -14,16 +16,19 @@ class Client_Socket
 {
 public:
 
-	Client_Socket(int argc, char** argv);
+	Client_Socket();
 	~Client_Socket() {};
 
-	void CreateSocket(int argc, char** argv);
+	void CreateSocket();
 
-	void SendSocket();
+	bool SendSocket();
+
+	bool ConnectSocket();
 
 	bool InitializeWindowsSocket();
 
 	SOCKET connectSocket = INVALID_SOCKET;
+	sockaddr_in serverAddress;
 
 	int iResult = 0;
 };

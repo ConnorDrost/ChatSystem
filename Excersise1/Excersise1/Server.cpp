@@ -161,6 +161,81 @@ void Server_Socket::ShutdownSocket()
 	return;
 }
 
+void Server_Socket::CustomSelect(SOCKET s, int operation)
+{
+	if (operation)
+	{
+		Read(s);
+	}
+	else
+	{
+		Write(s);
+	}
+}
+
+void Server_Socket::Read(SOCKET s)
+{
+	do {
+		FD_SET readSet;
+		timeval timeVal;
+
+		FD_ZERO(&readSet);
+		FD_SET(s, &readSet);
+
+		timeVal.tv_sec = 1;
+		timeVal.tv_usec = 0;
+
+		int iResult = select(0, &readSet, NULL, NULL, &timeVal);
+
+		if (iResult > 0) {
+			break;
+		}
+
+
+	} while (1);
+}
+
+void Server_Socket::Write(SOCKET s)
+{
+	//writing
+	do {
+		FD_SET writeSet;
+		timeval timeVal;
+
+		FD_ZERO(&writeSet);
+		FD_SET(s, &writeSet);
+
+		timeVal.tv_sec = 1;
+		timeVal.tv_usec = 0;
+
+		int iResult = select(0, NULL, &writeSet, NULL, &timeVal);
+
+		if (iResult > 0) {
+			break;
+		}
+
+	} while (1);
+}
+
+bool Server_Socket::Send()
+{
+	const char* messageToSend = "pong";
+
+	iResult = send(acceptedSocket, messageToSend, (int)strlen(messageToSend) + 1, 0);
+
+	if (iResult == SOCKET_ERROR)
+	{
+		printf("send failed with error: %d\n", WSAGetLastError());
+		closesocket(acceptedSocket);
+		WSACleanup();
+		return false;
+	}
+
+	printf("Bytes Sent: %ld\n", iResult);
+
+	return true;
+}
+
 void Server_Socket::Receive()
 {
 	do
@@ -170,17 +245,34 @@ void Server_Socket::Receive()
 		// Client<->Server communication. This version of
 		// server will handle only one client.
 
+		CustomSelect(serverListenSocket, 1);
+
 		AcceptSocket();
 
 		do
 		{
+
+			CustomSelect(acceptedSocket, 1);
+
 			// Receive data until the client shuts down the connection
 			iResult = recv(acceptedSocket, recvBuff, DEFAULT_BUFLEN, 0);
 
 
 			if (iResult > 0)
 			{
+				int numberofBytes = *((int*)recvBuff);
 				printf("Message received from client: %s.\n", recvBuff);
+
+				char* data = (char*)malloc(sizeof(numberofBytes) * sizeof(char));
+
+				for (int i = 0; i < numberofBytes; i++) 
+				{
+					data[i] = *(recvBuff + 4 + i);
+				}
+
+				PAKET* paket = (PAKET*)data;
+
+				printf("Sent number: %d\nPackage number: %d\n\n", paket->num, paket->cnt);
 			}
 			else if (iResult == 0)
 			{

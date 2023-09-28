@@ -9,7 +9,7 @@ int main()
         return 0;
     }
 
-    if (!Client.SendSocket())
+    if (!Client.Send())
     {
         return 0;
     }
@@ -45,20 +45,24 @@ void Client_Socket::CreateSocket()
     return;
 }
 
-bool Client_Socket::SendSocket()
+bool Client_Socket::Send()
 {
 
-    const char *messageToSend = "this is a test";
+    const char *messageToSend = "ping";
 
-    iResult = send(connectSocket, messageToSend, (int)strlen(messageToSend) + 1, 0);
-
-    if (iResult == SOCKET_ERROR)
+    for (int i = 0; i < 10; i++)
     {
-        printf("send failed with error: %d\n", WSAGetLastError());
-        closesocket(connectSocket);
-        WSACleanup();
-        return false;
+        iResult = send(connectSocket, messageToSend, (int)strlen(messageToSend) + 1, 0);
+
+        if (iResult == SOCKET_ERROR)
+        {
+            printf("send failed with error: %d\n", WSAGetLastError());
+            closesocket(connectSocket);
+            WSACleanup();
+            return false;
+        }
     }
+
 
     printf("Bytes Sent: %ld\n", iResult);
 
@@ -93,4 +97,32 @@ bool Client_Socket::InitializeWindowsSocket()
         return false;
     }
     return true;
-};
+}
+void Client_Socket::Receive()
+{
+    do
+    {
+        // Receive data until the client shuts down the connection
+        iResult = recv(connectSocket, recvBuff, DEFAULT_BUFLEN, 0);
+
+
+        if (iResult > 0)
+        {
+            printf("Message received from client: %s.\n", recvBuff);
+        }
+        else if (iResult == 0)
+        {
+            // connection was closed gracefully
+            printf("Connection with client closed.\n");
+            closesocket(connectSocket);
+        }
+        else
+        {
+            // there was an error during recv
+            printf("recv failed with error: %d\n", WSAGetLastError());
+            closesocket(connectSocket);
+        }
+
+    } while (iResult > 0);
+}
+;

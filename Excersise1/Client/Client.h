@@ -21,14 +21,17 @@ public:
 
 	void CreateSocket();
 
-	bool SendSocket();
+	bool Send();
 
 	bool ConnectSocket();
 
 	bool InitializeWindowsSocket();
 
+	void Receive();
+
 	SOCKET connectSocket = INVALID_SOCKET;
 	sockaddr_in serverAddress;
 
 	int iResult = 0;
+	char recvBuff[DEFAULT_BUFLEN];
 };

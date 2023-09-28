@@ -1,13 +1,19 @@
 #pragma once
+#include <iostream>
 #include <ws2tcpip.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #pragma comment (lib, "Ws2_32.lib")
 
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27016"
 
+#pragma pack(1)
+typedef struct packet {
+	int num;
+	int cnt;
+}PAKET;
 
 
 class Server_Socket
@@ -26,6 +32,11 @@ public:
 
 	void ShutdownSocket();
 
+	void CustomSelect(SOCKET s, int operation);
+	void Read(SOCKET s);
+	void Write(SOCKET s);
+
+	bool Send();
 	void Receive();
 
 	SOCKET serverListenSocket = INVALID_SOCKET;

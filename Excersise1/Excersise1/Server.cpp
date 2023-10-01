@@ -15,13 +15,11 @@ int main(void)
 		return 0;
 	}
 
-	if (!Server.AcceptSocket())
-	{
-		return 0;
-	}
-
-
 	Server.Receive();
+
+	Server.ShutdownSocket();
+
+	system("pause");
 
 	return 0;
 };
@@ -146,6 +144,7 @@ bool Server_Socket::AcceptSocket()
 
 void Server_Socket::ShutdownSocket()
 {
+
 	iResult = shutdown(acceptedSocket, SD_SEND);
 
 	if (iResult == SOCKET_ERROR)
@@ -159,62 +158,6 @@ void Server_Socket::ShutdownSocket()
 	printf("Socket Shutdown\n");
 
 	return;
-}
-
-void Server_Socket::CustomSelect(SOCKET s, int operation)
-{
-	if (operation)
-	{
-		Read(s);
-	}
-	else
-	{
-		Write(s);
-	}
-}
-
-void Server_Socket::Read(SOCKET s)
-{
-	do {
-		FD_SET readSet;
-		timeval timeVal;
-
-		FD_ZERO(&readSet);
-		FD_SET(s, &readSet);
-
-		timeVal.tv_sec = 1;
-		timeVal.tv_usec = 0;
-
-		int iResult = select(0, &readSet, NULL, NULL, &timeVal);
-
-		if (iResult > 0) {
-			break;
-		}
-
-
-	} while (1);
-}
-
-void Server_Socket::Write(SOCKET s)
-{
-	//writing
-	do {
-		FD_SET writeSet;
-		timeval timeVal;
-
-		FD_ZERO(&writeSet);
-		FD_SET(s, &writeSet);
-
-		timeVal.tv_sec = 1;
-		timeVal.tv_usec = 0;
-
-		int iResult = select(0, NULL, &writeSet, NULL, &timeVal);
-
-		if (iResult > 0) {
-			break;
-		}
-
-	} while (1);
 }
 
 bool Server_Socket::Send()
@@ -231,8 +174,6 @@ bool Server_Socket::Send()
 		return false;
 	}
 
-	printf("Bytes Sent: %ld\n", iResult);
-
 	return true;
 }
 
@@ -243,16 +184,12 @@ void Server_Socket::Receive()
 		// Wait for clients and accept client connections.
 		// Returning value is acceptedSocket used for further
 		// Client<->Server communication. This version of
-		// server will handle only one client.
-
-		CustomSelect(serverListenSocket, 1);
+		// server will handle only one client
 
 		AcceptSocket();
 
 		do
 		{
-
-			CustomSelect(acceptedSocket, 1);
 
 			// Receive data until the client shuts down the connection
 			iResult = recv(acceptedSocket, recvBuff, DEFAULT_BUFLEN, 0);
@@ -260,19 +197,8 @@ void Server_Socket::Receive()
 
 			if (iResult > 0)
 			{
-				int numberofBytes = *((int*)recvBuff);
-				printf("Message received from client: %s.\n", recvBuff);
-
-				char* data = (char*)malloc(sizeof(numberofBytes) * sizeof(char));
-
-				for (int i = 0; i < numberofBytes; i++) 
-				{
-					data[i] = *(recvBuff + 4 + i);
-				}
-
-				PAKET* paket = (PAKET*)data;
-
-				printf("Sent number: %d\nPackage number: %d\n\n", paket->num, paket->cnt);
+				printf("%s\n", recvBuff);
+				Send();
 			}
 			else if (iResult == 0)
 			{
@@ -288,11 +214,8 @@ void Server_Socket::Receive()
 			}
 
 		} while (iResult > 0);
-
-
-		// here is where server shutdown logic could be placed
-		ShutdownSocket();
 		
+		break;
 
 	} while (1);
 

@@ -32,10 +32,6 @@ public:
 
 	void ShutdownSocket();
 
-	void CustomSelect(SOCKET s, int operation);
-	void Read(SOCKET s);
-	void Write(SOCKET s);
-
 	bool Send();
 	void Receive();
 

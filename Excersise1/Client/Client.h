@@ -26,6 +26,7 @@ public:
 	bool ConnectSocket();
 
 	bool InitializeWindowsSocket();
+	void CloseSocket();
 
 	void Receive();
 
